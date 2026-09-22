@@ -3,6 +3,7 @@ import tempfile
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from parsers.registry import get_parser
+from categorizer import list_categories
 
 app = FastAPI(title="StatementAnalysis API")
 
@@ -49,6 +50,11 @@ async def upload_statements(files: list[UploadFile] = File(...)):
         "categories": categories,
         "errors": errors,
     }
+
+
+@app.get("/categories")
+def get_categories():
+    return {"categories": list_categories()}
 
 
 @app.get("/health")
