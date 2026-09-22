@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { uploadStatements } from "./api";
+import { useEffect, useState } from "react";
+import { uploadStatements, fetchCategories } from "./api";
 import type { Transaction } from "./api";
 import UploadZone from "./components/UploadZone";
 import FilterBar from "./components/FilterBar";
@@ -10,8 +10,21 @@ import ChartsView from "./components/ChartsView";
 type View = "table" | "charts";
 
 // First word of description, lowercased — used to match refunds to purchases
+// and to key manual category corrections, so a correction applies to every
+// transaction from the same merchant (now and on future uploads).
 function merchantKey(desc: string): string {
   return desc.trim().split(/\s+/)[0].toLowerCase();
+}
+
+const OVERRIDES_STORAGE_KEY = "categoryOverrides";
+
+function loadOverrides(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(OVERRIDES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }
 
 export default function App() {
@@ -23,14 +36,47 @@ export default function App() {
   const [minAmount, setMinAmount] = useState("");
   const [loadedFiles, setLoadedFiles] = useState<string[]>([]);
   const [view, setView] = useState<View>("table");
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, string>>(() => loadOverrides());
+
+  useEffect(() => {
+    fetchCategories()
+      .then(setCategoryOptions)
+      .catch(() => {
+        // Fall back silently to whatever categories show up in uploaded data.
+      });
+  }, []);
+
+  function updateCategory(transaction: Transaction, newCategory: string) {
+    const key = merchantKey(transaction.description);
+
+    setOverrides((prev) => {
+      const next = { ...prev, [key]: newCategory };
+      localStorage.setItem(OVERRIDES_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+
+    setAllTransactions((prev) => {
+      const updated = prev.map((t) =>
+        merchantKey(t.description) === key ? { ...t, category: newCategory } : t
+      );
+      setCategories(sorted([...new Set(updated.map((t) => t.category))]));
+      setSelectedCategories((prevSelected) => new Set(prevSelected).add(newCategory));
+      return updated;
+    });
+  }
 
   async function handleFiles(files: File[]) {
     setLoading(true);
     setErrors([]);
     try {
       const data = await uploadStatements(files);
+      const withOverrides = data.transactions.map((t) => {
+        const override = overrides[merchantKey(t.description)];
+        return override ? { ...t, category: override } : t;
+      });
       setAllTransactions((prev) => {
-        const merged = [...prev, ...data.transactions];
+        const merged = [...prev, ...withOverrides];
         const newCategories = sorted([...new Set(merged.map((t) => t.category))]);
         setCategories(newCategories);
         setSelectedCategories(new Set(newCategories));
@@ -201,7 +247,11 @@ export default function App() {
           </div>
 
           {view === "table" ? (
-            <TransactionTable transactions={filtered} />
+            <TransactionTable
+              transactions={filtered}
+              categoryOptions={sorted([...new Set([...categoryOptions, ...categories])])}
+              onUpdateCategory={updateCategory}
+            />
           ) : (
             <ChartsView transactions={filtered} />
           )}

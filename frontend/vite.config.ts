@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/upload": "http://localhost:8000",
+      "/categories": "http://localhost:8000",
       "/health": "http://localhost:8000",
     },
   },

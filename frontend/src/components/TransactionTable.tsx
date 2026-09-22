@@ -3,12 +3,14 @@ import type { Transaction } from "../api";
 
 interface Props {
   transactions: Transaction[];
+  categoryOptions: string[];
+  onUpdateCategory: (transaction: Transaction, newCategory: string) => void;
 }
 
 type SortKey = "date" | "description" | "category" | "amount";
 type SortDir = "asc" | "desc";
 
-export default function TransactionTable({ transactions }: Props) {
+export default function TransactionTable({ transactions, categoryOptions, onUpdateCategory }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -105,18 +107,29 @@ export default function TransactionTable({ transactions }: Props) {
                 {t.description}
               </td>
               <td style={{ padding: "10px 16px" }}>
-                <span
+                <select
+                  value={t.category}
+                  onChange={(e) => onUpdateCategory(t, e.target.value)}
                   style={{
                     background: "#eef2ff",
                     color: "#4f46e5",
                     borderRadius: 12,
-                    padding: "2px 10px",
+                    padding: "2px 8px",
                     fontSize: 12,
                     fontWeight: 500,
+                    border: "1px solid #c7d2fe",
+                    cursor: "pointer",
                   }}
                 >
-                  {t.category}
-                </span>
+                  {(categoryOptions.includes(t.category)
+                    ? categoryOptions
+                    : [t.category, ...categoryOptions]
+                  ).map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </td>
               <td
                 style={{

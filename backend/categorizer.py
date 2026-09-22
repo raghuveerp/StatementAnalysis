@@ -26,3 +26,8 @@ def categorize(description: str) -> str:
             if kw in desc_lower:
                 return category
     return "Other"
+
+
+def list_categories() -> list[str]:
+    rules = _load_rules()
+    return sorted(rules.keys()) + ["Other"]

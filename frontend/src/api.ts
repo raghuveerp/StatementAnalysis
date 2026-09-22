@@ -30,3 +30,12 @@ export async function uploadStatements(files: File[]): Promise<UploadResponse> {
 
   return res.json();
 }
+
+export async function fetchCategories(): Promise<string[]> {
+  const res = await fetch("/categories");
+  if (!res.ok) {
+    throw new Error("Failed to load categories");
+  }
+  const data = await res.json();
+  return data.categories;
+}
