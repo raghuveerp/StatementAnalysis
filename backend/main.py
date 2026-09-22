@@ -7,9 +7,16 @@ from categorizer import list_categories
 
 app = FastAPI(title="StatementAnalysis API")
 
+_default_origins = "http://localhost:5173,http://localhost:3000"
+allow_origins = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", _default_origins).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
