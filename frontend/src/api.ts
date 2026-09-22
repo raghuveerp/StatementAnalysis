@@ -18,7 +18,7 @@ export async function uploadStatements(files: File[]): Promise<UploadResponse> {
     form.append("files", file);
   }
 
-  const res = await fetch("http://localhost:8000/upload", {
+  const res = await fetch("/upload", {
     method: "POST",
     body: form,
   });
