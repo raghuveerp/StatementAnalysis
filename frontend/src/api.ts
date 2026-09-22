@@ -1,3 +1,8 @@
+// Base URL for the backend API. Empty string means same-origin (dev proxy
+// or same-domain production deploy); set VITE_API_URL at build time to
+// point at a separately-hosted backend.
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
 export interface Transaction {
   date: string;
   description: string;
@@ -18,7 +23,7 @@ export async function uploadStatements(files: File[]): Promise<UploadResponse> {
     form.append("files", file);
   }
 
-  const res = await fetch("/upload", {
+  const res = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     body: form,
   });
@@ -32,7 +37,7 @@ export async function uploadStatements(files: File[]): Promise<UploadResponse> {
 }
 
 export async function fetchCategories(): Promise<string[]> {
-  const res = await fetch("/categories");
+  const res = await fetch(`${API_BASE}/categories`);
   if (!res.ok) {
     throw new Error("Failed to load categories");
   }

@@ -47,3 +47,11 @@ Two independent services that communicate over HTTP:
 ## Adding/Editing Categories
 
 Edit `backend/categories.yml` — each key is a category name, value is a list of case-insensitive keywords matched against the transaction description.
+
+## Deploying
+
+`render.yaml` at the repo root is a [Render Blueprint](https://render.com/docs/blueprint-spec) that deploys both services: `backend/` as a Python web service, `frontend/` as a static site.
+
+1. On Render, create a new Blueprint from this repo — it reads `render.yaml` and provisions both services.
+2. The blueprint hardcodes each service's predicted public URL into the other's config (`ALLOWED_ORIGINS` on the backend, `VITE_API_URL` on the frontend), based on the service names in `render.yaml`. Render only guarantees those names if they're not already taken in your account — after the first deploy, check the actual URLs it assigned and update these two env vars if they differ, then redeploy.
+3. Locally, both env vars are optional: the backend defaults to allowing `localhost:5173`/`3000`, and the frontend defaults to same-origin requests (via the Vite dev proxy in `vite.config.ts`).
